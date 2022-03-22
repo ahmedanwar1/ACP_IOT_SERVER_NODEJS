@@ -14,4 +14,6 @@ const parkingSpaceSchema = new mongoose.Schema({
   },
 });
 
+parkingSpaceSchema.index({ location: "2dsphere" });
+
 export default mongoose.model("ParkingSpace", parkingSpaceSchema);

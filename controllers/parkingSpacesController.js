@@ -56,8 +56,43 @@ const open_parking_barrier = (req, res) => {
   res.json({ id, status: "opened" });
 };
 
+//get spaces close to longitude & latitude
+const parking_spaces_near_get = async (req, res) => {
+  const longitude = req.query.longitude;
+  const latitude = req.query.latitude;
+
+  const results = await ParkingSpaceModel.find({
+    location: {
+      $near: {
+        $maxDistance: 5000,
+        $geometry: {
+          type: "Point",
+          coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        },
+      },
+    },
+  });
+
+  const mergedData = [];
+  for (let i = 0; i < results.length; i++) {
+    if (parkingSpaces[results[i]._id]) {
+      mergedData.push({
+        ...parkingSpaces[results[i]._id],
+        coordinates: results[i].location.coordinates,
+      });
+    }
+  }
+
+  res.json(
+    mergedData.length > 0
+      ? { data: mergedData }
+      : { errorMsg: "No parking spaces!" }
+  );
+};
+
 export {
   all_parking_spaces_get,
   parking_space_get_by_ID,
   open_parking_barrier,
+  parking_spaces_near_get,
 };
