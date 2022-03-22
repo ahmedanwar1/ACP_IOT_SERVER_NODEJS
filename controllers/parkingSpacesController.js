@@ -8,7 +8,7 @@ const all_parking_spaces_get = (req, res) => {
     redisClient.get("parkingspaces", async (error, spaces) => {
       let results = null;
       if (error) {
-        console.log(error);
+        console.error(error);
       }
       if (spaces != null) {
         results = JSON.parse(spaces);

@@ -33,8 +33,8 @@ mqttClient.on("connect", function () {
 
   setInterval(() => {
     mqttClient.publish(
-      "parking/space/622364eb58f6db1edd8ed898",
-      '{"_id": "622364eb58f6db1edd8ed898", "vacant": false, "barrierIsOpened": true}'
+      "parking/space/6230e4050551177b1192d7cd",
+      '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true}'
     );
   }, 5000);
 });
