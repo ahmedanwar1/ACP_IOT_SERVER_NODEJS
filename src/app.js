@@ -2,15 +2,18 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { mqttClient, redisClient } from "../config/connections.js";
+import {
+  mqttClient,
+  //  redisClient
+} from "../config/connections.js";
 import express from "express";
 import parkingSpacesRoutes from "../routes/parkingSpacesRoutes.js";
 
 const app = express();
 
-//redis connection triggers
-redisClient.on("connect", () => console.log("Redis Client connected"));
-redisClient.on("error", (err) => console.log("Redis Client Error", err));
+// //redis connection triggers
+// redisClient.on("connect", () => console.log("Redis Client connected"));
+// redisClient.on("error", (err) => console.log("Redis Client Error", err));
 
 //current available parking spaces
 const parkingSpaces = {};

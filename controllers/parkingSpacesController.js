@@ -1,38 +1,42 @@
-import { redisClient } from "../config/connections.js";
+// import { redisClient } from "../config/connections.js";
 import { parkingSpaces } from "../src/app.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
 
-const all_parking_spaces_get = (req, res) => {
+const all_parking_spaces_get = async (req, res) => {
   try {
     // if (req.query.API_Key == "123456789") {
-    redisClient.get("parkingspaces", async (error, spaces) => {
-      let results = null;
-      if (error) {
-        console.error(error);
+    // redisClient.get("parkingspaces", async (error, spaces) => {
+    //   let results = null;
+    //   if (error) {
+    //     console.error(error);
+    //   }
+    //   if (spaces != null) {
+    //     results = JSON.parse(spaces);
+    //   } else {
+    //     const data = await ParkingSpaceModel.find();
+    //     if (data) {
+    //       redisClient.setex("parkingspaces", 120000, JSON.stringify(data));
+    //       results = data;
+    //     }
+    //   }
+    const results = await ParkingSpaceModel.find();
+    const mergedData = [];
+    for (let i = 0; i < results.length; i++) {
+      if (parkingSpaces[results[i]._id]) {
+        mergedData.push({
+          ...parkingSpaces[results[i]._id],
+          coordinates: results[i].location.coordinates,
+        });
+        // mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
       }
-      if (spaces != null) {
-        results = JSON.parse(spaces);
-      } else {
-        const data = await ParkingSpaceModel.find();
-        if (data) {
-          redisClient.setex("parkingspaces", 120000, JSON.stringify(data));
-          results = data;
-        }
-      }
+    }
 
-      const mergedData = [];
-      for (let i = 0; i < results.length; i++) {
-        if (parkingSpaces[results[i]._id]) {
-          mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
-        }
-      }
-
-      res.json(
-        mergedData.length > 0
-          ? { data: mergedData }
-          : { errorMsg: "No parking spaces!" }
-      );
-    });
+    res.json(
+      mergedData.length > 0
+        ? { data: mergedData }
+        : { errorMsg: "No parking spaces!" }
+    );
+    // });
     // }
     // return res.json({ msg: "NOT AUTHORIZED!" });
   } catch (error) {

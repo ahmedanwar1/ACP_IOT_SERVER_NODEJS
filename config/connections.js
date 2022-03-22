@@ -18,6 +18,9 @@ const mqttClient = mqtt.connect(
 );
 
 //connect to redis
-const redisClient = createClient(6379);
+// const redisClient = createClient(6379);
 
-export { mqttClient, redisClient };
+export {
+  mqttClient,
+  //  redisClient
+};
