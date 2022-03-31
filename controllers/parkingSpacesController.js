@@ -1,5 +1,5 @@
 // import { redisClient } from "../config/connections.js";
-import { parkingSpaces } from "../src/app.js";
+import { parkingSpaces } from "../app.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
 
 const all_parking_spaces_get = async (req, res) => {
@@ -46,12 +46,16 @@ const all_parking_spaces_get = async (req, res) => {
 };
 
 //incompleted... :'(
-const parking_space_get_by_ID = (req, res) => {
+const parking_space_get_by_ID = async (req, res) => {
   const _id = req.params.id;
-
-  return res.json(
-    parkingSpaces[_id] ? { ...parkingSpaces[_id] } : { msg: "No such space!" }
-  );
+  const space = await ParkingSpaceModel.find({ _id: _id });
+  console.log(...space);
+  // return res.json(
+  //   parkingSpaces[_id] ? { ...parkingSpaces[_id] } : { msg: "No such space!" }
+  if (space) {
+    return res.json(...space);
+  }
+  return res.json({ msg: "No such space!" });
 };
 
 const open_parking_barrier = (req, res) => {

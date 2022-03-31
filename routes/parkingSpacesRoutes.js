@@ -11,8 +11,8 @@ const router = express.Router();
 router.get("/getAllParkingSpaces", all_parking_spaces_get);
 
 //get the nearest parking spaces
-router.get("/getParkingSpacesNear", parking_spaces_near_get);
-//http://localhost:3000/getParkingSpacesNear?longitude=31.80602&latitude=30.080012
+router.get("/getNearParkingSpaces", parking_spaces_near_get);
+//http://localhost:3000/getNearParkingSpaces?longitude=31.80602&latitude=30.080012
 
 //get a specific parking space by id
 router.get("/getParkingSpace/:id", parking_space_get_by_ID);

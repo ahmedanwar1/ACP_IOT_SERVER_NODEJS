@@ -5,11 +5,13 @@ dotenv.config();
 import {
   mqttClient,
   //  redisClient
-} from "../config/connections.js";
+} from "./config/connections.js";
 import express from "express";
-import parkingSpacesRoutes from "../routes/parkingSpacesRoutes.js";
+import parkingSpacesRoutes from "./routes/parkingSpacesRoutes.js";
 
 const app = express();
+
+app.use(express.json());
 
 // //redis connection triggers
 // redisClient.on("connect", () => console.log("Redis Client connected"));
