@@ -31,17 +31,15 @@ const all_parking_spaces_get = async (req, res) => {
       }
     }
 
-    res.json(
-      mergedData.length > 0
-        ? { data: mergedData }
-        : { errorMsg: "No parking spaces!" }
-    );
+    mergedData.length > 0
+      ? res.status(201).json({ data: mergedData })
+      : res.status(404).json({ errorMsg: "No parking spaces!" });
     // });
     // }
     // return res.json({ msg: "NOT AUTHORIZED!" });
   } catch (error) {
     console.log(error);
-    res.json({ error });
+    res.status(500).json({ error });
   }
 };
 
@@ -55,7 +53,7 @@ const parking_space_get_by_ID = async (req, res) => {
   if (space) {
     return res.json(...space);
   }
-  return res.json({ msg: "No such space!" });
+  return res.status(404).json({ msg: "No such space!" });
 };
 
 const open_parking_barrier = (req, res) => {
@@ -91,11 +89,9 @@ const parking_spaces_near_get = async (req, res) => {
     }
   }
 
-  res.json(
-    mergedData.length > 0
-      ? { data: mergedData }
-      : { errorMsg: "No parking spaces!" }
-  );
+  mergedData.length > 0
+    ? res.status(201).json({ data: mergedData })
+    : res.status(404).json({ errorMsg: "No parking spaces!" });
 };
 
 export {

@@ -8,6 +8,7 @@ import {
 } from "./config/connections.js";
 import express from "express";
 import parkingSpacesRoutes from "./routes/parkingSpacesRoutes.js";
+import usersRouter from "./routes/usersRouter.js";
 
 const app = express();
 
@@ -65,7 +66,8 @@ mqttClient.on("message", function (topic, message) {
 });
 
 app.use(parkingSpacesRoutes);
+app.use(usersRouter);
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
 
 export { parkingSpaces };
