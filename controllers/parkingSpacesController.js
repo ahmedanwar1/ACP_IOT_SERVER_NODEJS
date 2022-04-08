@@ -1,6 +1,7 @@
 // import { redisClient } from "../config/connections.js";
 import { parkingSpaces } from "../app.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
+import { mqttClient } from "../config/connections.js";
 
 const all_parking_spaces_get = async (req, res) => {
   try {
@@ -67,10 +68,11 @@ const parking_spaces_near_get = async (req, res) => {
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
 
+  //request near parking spaces from db based on location
   const results = await ParkingSpaceModel.find({
     location: {
       $near: {
-        $maxDistance: 5000,
+        $maxDistance: 5000, //max distance to user's location
         $geometry: {
           type: "Point",
           coordinates: [parseFloat(longitude), parseFloat(latitude)],
@@ -79,6 +81,7 @@ const parking_spaces_near_get = async (req, res) => {
     },
   });
 
+  //merge current available spaces with the near spaces
   const mergedData = [];
   for (let i = 0; i < results.length; i++) {
     if (parkingSpaces[results[i]._id]) {
