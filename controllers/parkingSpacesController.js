@@ -1,31 +1,19 @@
 // import { redisClient } from "../config/connections.js";
-import { parkingSpaces } from "../app.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
-import { mqttClient } from "../config/connections.js";
+import { mqttClient, redisClient } from "../config/connections.js";
+import { eventEmitter } from "../app.js";
 
 const all_parking_spaces_get = async (req, res) => {
   try {
-    // if (req.query.API_Key == "123456789") {
-    // redisClient.get("parkingspaces", async (error, spaces) => {
-    //   let results = null;
-    //   if (error) {
-    //     console.error(error);
-    //   }
-    //   if (spaces != null) {
-    //     results = JSON.parse(spaces);
-    //   } else {
-    //     const data = await ParkingSpaceModel.find();
-    //     if (data) {
-    //       redisClient.setex("parkingspaces", 120000, JSON.stringify(data));
-    //       results = data;
-    //     }
-    //   }
     const results = await ParkingSpaceModel.find();
     const mergedData = [];
     for (let i = 0; i < results.length; i++) {
-      if (parkingSpaces[results[i]._id]) {
+      let value = await redisClient.get(results[i]._id);
+      if (value) {
+        value = JSON.parse(value);
+        // console.log(value);
         mergedData.push({
-          ...parkingSpaces[results[i]._id],
+          ...value,
           coordinates: results[i].location.coordinates,
         });
         // mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
@@ -59,8 +47,33 @@ const parking_space_get_by_ID = async (req, res) => {
 
 const open_parking_barrier = (req, res) => {
   const id = req.params.id;
-  mqttClient.publish("parking/openbarrier/" + id, "open");
-  res.json({ id, status: "opened" });
+  // mqttClient.publish("parking/openbarrier/" + id, "open");
+  // res.json({ id, status: "opened" });
+  /***************/
+  const checkTimeOut = setTimeout(() => {
+    eventEmitter.emit("responseEvent/openbarrier/" + id, {
+      error: true,
+      message: "timeOut",
+    });
+  }, 5000);
+
+  eventEmitter.once("responseEvent/openbarrier/" + id, (responseMessage) => {
+    clearTimeout(checkTimeOut);
+    res.json({ responseMessage });
+  });
+
+  mqttClient.publish(
+    "request/openbarrier/" + id,
+    // JSON.stringify({ action: "open" }),
+    "open",
+    {
+      qos: 1,
+      properties: {
+        responseTopic: "response/openbarrier/" + id,
+        // correlationData: Buffer.from("secret_" + id, "utf-8"),
+      },
+    }
+  );
 };
 
 //get spaces close to longitude & latitude
@@ -84,9 +97,12 @@ const parking_spaces_near_get = async (req, res) => {
   //merge current available spaces with the near spaces
   const mergedData = [];
   for (let i = 0; i < results.length; i++) {
-    if (parkingSpaces[results[i]._id]) {
+    let value = await redisClient.get(results[i]._id);
+    if (value) {
+      value = JSON.parse(value);
+      console.log(value);
       mergedData.push({
-        ...parkingSpaces[results[i]._id],
+        ...value,
         coordinates: results[i].location.coordinates,
       });
     }
