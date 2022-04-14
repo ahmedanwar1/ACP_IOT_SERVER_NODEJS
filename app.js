@@ -7,10 +7,12 @@ import express from "express";
 import parkingSpacesRoutes from "./routes/parkingSpacesRoutes.js";
 import usersRouter from "./routes/usersRouter.js";
 import EventEmitter from "events";
+import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 //when connecting to mqtt protocol
 mqttClient.on("connect", () => {
@@ -19,14 +21,14 @@ mqttClient.on("connect", () => {
   mqttClient.subscribe("parking/space/#");
   mqttClient.subscribe("response/+/+");
 
-  // setInterval(() => {
-  //   mqttClient.publish(
-  //     "parking/space/6230e4050551177b1192d7cd",
-  //     '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
-  //       new Date().getTime() +
-  //       "}"
-  //   );
-  // }, 5000);
+  setInterval(() => {
+    mqttClient.publish(
+      "parking/space/6230e4050551177b1192d7cd",
+      '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+        new Date().getTime() +
+        "}"
+    );
+  }, 5000);
 });
 
 export const eventEmitter = new EventEmitter();
@@ -35,7 +37,7 @@ export const eventEmitter = new EventEmitter();
 mqttClient.on("message", (topic, message) => {
   let incomingSpace = JSON.parse(message.toString());
 
-  const topicArr = topic.split("/"); //spliting the topic ==> [response,deviceName,relayName]
+  const topicArr = topic.split("/"); //spliting the topic ==> [response,action,_id]
   if (topicArr[0] == "response") {
     const eventName = `responseEvent/${topicArr[1]}/${topicArr[2]}`;
     const eventData = JSON.parse(message.toString());
