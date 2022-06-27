@@ -14,6 +14,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+app.use((req, res, next) => {
+  console.log("testttstst");
+  next();
+});
+
 //when connecting to mqtt protocol
 mqttClient.on("connect", () => {
   console.log("connected to mqtt!");
@@ -21,14 +26,14 @@ mqttClient.on("connect", () => {
   mqttClient.subscribe("parking/space/#");
   mqttClient.subscribe("response/+/+");
 
-  setInterval(() => {
-    mqttClient.publish(
-      "parking/space/6230e4050551177b1192d7cd",
-      '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
-        new Date().getTime() +
-        "}"
-    );
-  }, 5000);
+  // setInterval(() => {
+  mqttClient.publish(
+    "parking/space/6230e4050551177b1192d7cd",
+    '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+      new Date().getTime() +
+      "}"
+  );
+  // }, 5000);
 });
 
 export const eventEmitter = new EventEmitter();
@@ -46,7 +51,7 @@ mqttClient.on("message", (topic, message) => {
     //if incoming space arrives
     if (incomingSpace) {
       redisClient.set(incomingSpace._id, JSON.stringify(incomingSpace), {
-        EX: 900,
+        EX: 60,
       });
       console.log(incomingSpace);
       // console.log(message.toString());
@@ -58,4 +63,4 @@ mqttClient.on("message", (topic, message) => {
 app.use(parkingSpacesRoutes);
 app.use(usersRouter);
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 4000);

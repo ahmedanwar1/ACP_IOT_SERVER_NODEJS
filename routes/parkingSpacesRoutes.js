@@ -4,6 +4,7 @@ import {
   parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
+  reserve_parking_space,
 } from "../controllers/parkingSpacesController.js";
 
 const router = express.Router();
@@ -19,6 +20,9 @@ router.get("/getParkingSpace/:id", parking_space_get_by_ID);
 
 //req to open barrier of a specific parking space
 router.get("/openBarrier/:id", open_parking_barrier);
+
+//reserve a parking space
+router.get("/reserveParkingSpace", reserve_parking_space);
 
 // app.get("/test", async (req, res) => {});
 
