@@ -48,38 +48,61 @@ const parking_space_get_by_ID = async (req, res) => {
 };
 
 //!
-const open_parking_barrier = (req, res) => {
-  const id = req.params.id;
+const open_parking_barrier = async (req, res) => {
+  const { userId } = req.body;
   // mqttClient.publish("parking/openbarrier/" + id, "open");
   // res.json({ id, status: "opened" });
   /***************/
-  const checkTimeOut = setTimeout(() => {
-    eventEmitter.emit("responseEvent/openbarrier/" + id, {
-      error: true,
-      message: "timeOut",
-    });
-  }, 5000);
-
-  eventEmitter.once("responseEvent/openbarrier/" + id, (responseMessage) => {
-    clearTimeout(checkTimeOut);
-    res.json({ responseMessage });
-  });
-
-  mqttClient.publish(
-    "request/openbarrier/" + id,
-    // JSON.stringify({ action: "open" }),
-    "open",
+  const parkingSpaceReservation = await ReservationModel.findOneAndUpdate(
     {
-      qos: 1,
-      properties: {
-        responseTopic: "response/openbarrier/" + id,
-        // correlationData: Buffer.from("secret_" + id, "utf-8"),
-      },
-    }
+      registration_number: userId,
+    },
+    { isCarParked: true }
   );
+
+  if (parkingSpaceReservation) {
+    console.log(parkingSpaceReservation.parkingSpaceId.toString());
+    const checkTimeOut = setTimeout(() => {
+      eventEmitter.emit(
+        "responseEvent/openbarrier/" +
+          parkingSpaceReservation.parkingSpaceId.toString(),
+        {
+          error: true,
+          message: "timeOut",
+        }
+      );
+    }, 10000);
+
+    eventEmitter.once(
+      "responseEvent/openbarrier/" +
+        parkingSpaceReservation.parkingSpaceId.toString(),
+      (responseMessage) => {
+        clearTimeout(checkTimeOut);
+        res.json({ responseMessage });
+      }
+    );
+    // parkingSpaceReservation.isCarParked = true;
+    // const result = await parkingSpaceReservation.save();
+    // if (result) {
+    mqttClient.publish(
+      "request/openbarrier/" +
+        parkingSpaceReservation.parkingSpaceId.toString(),
+      // JSON.stringify({ action: "open" }),
+      "open",
+      {
+        qos: 1,
+        properties: {
+          responseTopic:
+            "response/openbarrier/" +
+            parkingSpaceReservation.parkingSpaceId.toString(),
+          // correlationData: Buffer.from("secret_" + id, "utf-8"),
+        },
+      }
+    );
+    // }
+  }
 };
 
-//! edit to filter spaces based on reservation and time, date
 //get spaces close to longitude & latitude
 const parking_spaces_near_get = async (req, res) => {
   const longitude = req.query.longitude;
@@ -101,7 +124,7 @@ const parking_spaces_near_get = async (req, res) => {
         $maxDistance: 5000, //max distance to user's location
         $geometry: {
           type: "Point",
-          coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          coordinates: [parseFloat(latitude), parseFloat(longitude)],
         },
       },
     },
@@ -117,6 +140,8 @@ const parking_spaces_near_get = async (req, res) => {
       mergedData.push({
         ...value,
         coordinates: results[i].location.coordinates,
+        price: results[i]._doc.price,
+        // hi: "dsj",
       });
     }
   }
@@ -128,10 +153,10 @@ const parking_spaces_near_get = async (req, res) => {
 
 //!
 const reserve_parking_space = async (req, res) => {
-  const { date, parkingSpaceId } = req.body;
+  const { date, parkingSpaceId, studentNumber } = req.body;
   //auth user
   //! delete this
-  const studentNumber = "18103033";
+  // const studentNumber = "18103033";
   //check inputs (date)
   if (!date || date < new Date()) {
     return res.status(400).json({ errorMsg: "error: date is incorrect!" });
@@ -163,9 +188,6 @@ const reserve_parking_space = async (req, res) => {
   //send ack
   res.status(201).json({ data: results });
 };
-
-//! might be a middleware (reserving / car parked / looking for a space)
-const userStatus = async (req, res) => {};
 
 export {
   all_parking_spaces_get,

@@ -8,6 +8,9 @@ import parkingSpacesRoutes from "./routes/parkingSpacesRoutes.js";
 import usersRouter from "./routes/usersRouter.js";
 import EventEmitter from "events";
 import cors from "cors";
+import https from "https";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 
@@ -26,14 +29,21 @@ mqttClient.on("connect", () => {
   mqttClient.subscribe("parking/space/#");
   mqttClient.subscribe("response/+/+");
 
+  // mqttClient.publish(
+  //   "parking/space/6230e4050551177b1192d7cd",
+  //   '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+  //     new Date().getTime() +
+  //     "}"
+  // );
+
   // setInterval(() => {
-  mqttClient.publish(
-    "parking/space/6230e4050551177b1192d7cd",
-    '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
-      new Date().getTime() +
-      "}"
-  );
-  // }, 5000);
+  //   mqttClient.publish(
+  //     "parking/space/6230e4050551177b1192d7cd",
+  //     '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+  //       new Date().getTime() +
+  //       "}"
+  //   );
+  // }, 40000);
 });
 
 export const eventEmitter = new EventEmitter();
@@ -63,4 +73,15 @@ mqttClient.on("message", (topic, message) => {
 app.use(parkingSpacesRoutes);
 app.use(usersRouter);
 
+const __dirname = path.resolve();
+
 app.listen(process.env.PORT || 4000);
+// const sslServer = https.createServer(
+//   {
+//     key: fs.readFileSync(path.join(__dirname, "cert", "key.pem")),
+//     cert: fs.readFileSync(path.join(__dirname, "cert", "cert.pem")),
+//   },
+//   app
+// );
+
+// sslServer.listen(4000);
