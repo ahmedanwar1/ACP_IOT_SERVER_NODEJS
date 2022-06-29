@@ -19,11 +19,13 @@
     "express": "^4.17.3",
     "jsonwebtoken": "^8.5.1",
     "level": "^5.0.1",
+    "moment": "^2.29.3",
     "mongoose": "^6.2.6",
     "mqtt": "^4.3.6",
     "mqtt-level-store": "^3.1.0",
     "redis": "^4.0.6",
-    "redis-stream": "^0.1.0"
+    "redis-stream": "^0.1.0",
+    "stripe": "^9.10.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",

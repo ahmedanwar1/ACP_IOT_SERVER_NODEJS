@@ -7,19 +7,24 @@ const reservationSchema = new mongoose.Schema(
       // type: mongoose.SchemaTypes.ObjectId,
       type: String,
       ref: "User",
-      unique: true,
+      // unique: true,
     },
     parkingSpaceId: {
       required: true,
       type: mongoose.SchemaTypes.ObjectId,
       ref: "ParkingSpace",
-      unique: true,
+      // unique: true,
     },
     reservationDate: {
       required: true,
       type: Date,
     },
     isCarParked: {
+      required: true,
+      type: Boolean,
+      default: false,
+    },
+    completed: {
       required: true,
       type: Boolean,
       default: false,

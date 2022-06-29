@@ -40,6 +40,7 @@ const isAuth = async (req, res, next) => {
       res.json({ success: false, message: "Internal server error!" });
     }
   } else {
+    console.log(req.headers);
     res.json({ success: false, message: "unauthorized access! esle" });
   }
 };

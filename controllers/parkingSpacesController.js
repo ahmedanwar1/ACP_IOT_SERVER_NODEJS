@@ -3,6 +3,7 @@ import ParkingSpaceModel from "../model/ParkingSpace.js";
 import { mqttClient, redisClient } from "../config/connections.js";
 import { eventEmitter } from "../app.js";
 import ReservationModel from "../model/Reservation.js";
+import moment from "moment";
 
 //* test
 const all_parking_spaces_get = async (req, res) => {
@@ -49,13 +50,14 @@ const parking_space_get_by_ID = async (req, res) => {
 
 //!
 const open_parking_barrier = async (req, res) => {
-  const { userId } = req.body;
+  const { registration_number: userId } = req.user;
   // mqttClient.publish("parking/openbarrier/" + id, "open");
   // res.json({ id, status: "opened" });
   /***************/
   const parkingSpaceReservation = await ReservationModel.findOneAndUpdate(
     {
       registration_number: userId,
+      completed: false,
     },
     { isCarParked: true }
   );
@@ -108,9 +110,9 @@ const parking_spaces_near_get = async (req, res) => {
   const longitude = req.query.longitude;
   const latitude = req.query.latitude;
 
-  const parkingSpaceReservation = await ReservationModel.find({}).select(
-    "parkingSpaceId"
-  );
+  const parkingSpaceReservation = await ReservationModel.find({
+    completed: false,
+  }).select("parkingSpaceId");
   const reservedSpacesArr = parkingSpaceReservation.map(
     (s) => s.parkingSpaceId
   );
@@ -136,7 +138,7 @@ const parking_spaces_near_get = async (req, res) => {
     let value = await redisClient.get(results[i]._id);
     if (value) {
       value = JSON.parse(value);
-      console.log(value);
+      console.log(value); //!vacant = true
       mergedData.push({
         ...value,
         coordinates: results[i].location.coordinates,
@@ -153,17 +155,19 @@ const parking_spaces_near_get = async (req, res) => {
 
 //!
 const reserve_parking_space = async (req, res) => {
-  const { date, parkingSpaceId, studentNumber } = req.body;
-  //auth user
-  //! delete this
-  // const studentNumber = "18103033";
+  const { date, parkingSpaceId } = req.body;
+  const { registration_number: userId } = req.user;
+
   //check inputs (date)
-  if (!date || date < new Date()) {
+  if (!date || !moment(date).isAfter(moment(new Date()))) {
     return res.status(400).json({ errorMsg: "error: date is incorrect!" });
   }
   //check parking space
   const parkingSpaceReservationFound = await ReservationModel.find({
-    parkingSpaceId: parkingSpaceId,
+    $or: [
+      { parkingSpaceId: parkingSpaceId, completed: false },
+      { userId, completed: false },
+    ],
   });
   const parkingSpaceFound = await ParkingSpaceModel.findById(parkingSpaceId);
   if (parkingSpaceReservationFound.length != 0) {
@@ -174,10 +178,11 @@ const reserve_parking_space = async (req, res) => {
   }
   //reserve
   const reservtion = new ReservationModel({
-    userId: studentNumber,
+    userId,
     parkingSpaceId: parkingSpaceId,
     reservationDate: date,
     isCarParked: false,
+    completed: false,
   });
 
   const results = await reservtion.save();
