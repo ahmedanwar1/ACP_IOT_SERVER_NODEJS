@@ -11,7 +11,6 @@ const transactionSchema = new mongoose.Schema(
       required: true,
       type: mongoose.SchemaTypes.ObjectId,
       ref: "Reservation",
-      // unique: true,
     },
     amount: {
       required: true,

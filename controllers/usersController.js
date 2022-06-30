@@ -1,3 +1,4 @@
+import { eventEmitter } from "../app.js";
 import bcrypt from "bcrypt";
 import UserModel from "../model/User.js";
 import ReservationModel from "../model/Reservation.js";
@@ -18,7 +19,9 @@ const register_user_post = async (req, res) => {
   const phone = req.body.phone;
 
   if (!name || !registration_number || !password) {
-    return res.status(400).send("inserted data is not valid!");
+    return res
+      .status(400)
+      .json({ message: "inserted data is not valid!", error: true });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -27,7 +30,9 @@ const register_user_post = async (req, res) => {
     registration_number: registration_number,
   });
   if (user) {
-    return res.status(400).send("That user already exisits!");
+    return res
+      .status(400)
+      .json({ message: "That user already exisits!", error: true });
   } else {
     // Insert the new user if they do not exist yet
     user = new UserModel({
@@ -110,7 +115,9 @@ const pay = async (req, res) => {
     }).populate("parkingSpaceId");
 
     if (!parkingSpaceReservation) {
-      return res.status(400).json({ message: "reservation not found!" });
+      return res
+        .status(400)
+        .json({ message: "reservation not found!", error: true });
     }
 
     const numberOfReservedHours = moment(new Date()).diff(
@@ -148,7 +155,7 @@ const pay = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: true });
   }
 };
 
@@ -162,7 +169,9 @@ const payment_confirmed = async (req, res) => {
   });
 
   if (!parkingSpaceReservation) {
-    return res.status(400).json({ message: "reservation not found!" });
+    return res
+      .status(400)
+      .json({ message: "reservation not found!", error: true });
   }
 
   const transaction = new TransactionModel({
@@ -175,7 +184,7 @@ const payment_confirmed = async (req, res) => {
   if (!results) {
     return res
       .status(400)
-      .json({ errorMsg: "error: storing transaction failed!" });
+      .json({ message: "error: storing transaction failed!", error: true });
   }
 
   //! open barrier .....
@@ -188,7 +197,8 @@ const payment_confirmed = async (req, res) => {
     const checkTimeOut = setTimeout(() => {
       eventEmitter.emit("responseEvent/openbarrier/" + spaceId, {
         error: true,
-        message: "timeOut",
+        // message: "timeOut",
+        message: "Error: couldn't open barrier!",
       });
     }, 10000);
 
@@ -196,7 +206,9 @@ const payment_confirmed = async (req, res) => {
       "responseEvent/openbarrier/" + spaceId,
       (responseMessage) => {
         clearTimeout(checkTimeOut);
-        res.json({ responseMessage });
+        return res.json({
+          responseMessage,
+        });
       }
     );
 
@@ -216,15 +228,13 @@ const payment_confirmed = async (req, res) => {
   );
 
   if (!updatedReservation) {
-    return res.status(400).json({ message: "updated reservation failed!" });
+    return res
+      .status(400)
+      .json({ message: "updated reservation failed!", error: true });
   }
 
   res.status(201).json({ message: "transaction completed!", confirmed: true });
 };
-
-import { eventEmitter } from "../app.js";
-
-const openBarrier = (spaceId, res) => {};
 
 export {
   register_user_post,

@@ -1,7 +1,7 @@
 import express from "express";
 import {
-  all_parking_spaces_get,
-  parking_space_get_by_ID,
+  // all_parking_spaces_get,
+  // parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
   reserve_parking_space,
@@ -11,10 +11,10 @@ import isAuth from "../middleware/auth.js";
 
 const router = express.Router();
 //get all parking spaces
-router.get("/getAllParkingSpaces", all_parking_spaces_get);
+// router.get("/getAllParkingSpaces", all_parking_spaces_get);
 
 //get a specific parking space by id
-router.get("/getParkingSpace/:id", parking_space_get_by_ID);
+// router.get("/getParkingSpace/:id", parking_space_get_by_ID);
 
 //get the nearest parking spaces
 router.get("/getNearParkingSpaces", isAuth, parking_spaces_near_get);

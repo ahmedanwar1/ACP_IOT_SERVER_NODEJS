@@ -5,55 +5,54 @@ import { eventEmitter } from "../app.js";
 import ReservationModel from "../model/Reservation.js";
 import moment from "moment";
 
-//* test
-const all_parking_spaces_get = async (req, res) => {
-  try {
-    const results = await ParkingSpaceModel.find();
-    const mergedData = [];
-    for (let i = 0; i < results.length; i++) {
-      let value = await redisClient.get(results[i]._id);
-      if (value) {
-        value = JSON.parse(value);
-        // console.log(value);
-        mergedData.push({
-          ...value,
-          coordinates: results[i].location.coordinates,
-        });
-        // mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
-      }
-    }
+// //* test
+// const all_parking_spaces_get = async (req, res) => {
+//   try {
+//     const results = await ParkingSpaceModel.find();
+//     const mergedData = [];
+//     for (let i = 0; i < results.length; i++) {
+//       let value = await redisClient.get(results[i]._id);
+//       if (value) {
+//         value = JSON.parse(value);
+//         // console.log(value);
+//         mergedData.push({
+//           ...value,
+//           coordinates: results[i].location.coordinates,
+//         });
+//         // mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
+//       }
+//     }
 
-    mergedData.length > 0
-      ? res.status(201).json({ data: mergedData })
-      : res.status(404).json({ data: [], errorMsg: "No parking spaces!" });
-    // });
-    // }
-    // return res.json({ msg: "NOT AUTHORIZED!" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error });
-  }
-};
+//     mergedData.length > 0
+//       ? res.status(201).json({ data: mergedData, success: true })
+//       : res
+//           .status(404)
+//           .json({ data: [], message: "No parking spaces!", success: false });
+//     // });
+//     // }
+//     // return res.json({ msg: "NOT AUTHORIZED!" });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: error });
+//   }
+// };
 
-//* test
-const parking_space_get_by_ID = async (req, res) => {
-  const _id = req.params.id;
-  const space = await ParkingSpaceModel.find({ _id: _id });
-  console.log(...space);
-  // return res.json(
-  //   parkingSpaces[_id] ? { ...parkingSpaces[_id] } : { msg: "No such space!" }
-  if (space) {
-    return res.json(...space);
-  }
-  return res.status(404).json({ msg: "No such space!" });
-};
+// //* test
+// const parking_space_get_by_ID = async (req, res) => {
+//   const _id = req.params.id;
+//   const space = await ParkingSpaceModel.find({ _id: _id });
+//   console.log(...space);
+//   // return res.json(
+//   //   parkingSpaces[_id] ? { ...parkingSpaces[_id] } : { msg: "No such space!" }
+//   if (space) {
+//     return res.json(...space);
+//   }
+//   return res.status(404).json({ msg: "No such space!" });
+// };
 
 //!
 const open_parking_barrier = async (req, res) => {
   const { registration_number: userId } = req.user;
-  // mqttClient.publish("parking/openbarrier/" + id, "open");
-  // res.json({ id, status: "opened" });
-  /***************/
   const parkingSpaceReservation = await ReservationModel.findOneAndUpdate(
     {
       registration_number: userId,
@@ -70,6 +69,7 @@ const open_parking_barrier = async (req, res) => {
           parkingSpaceReservation.parkingSpaceId.toString(),
         {
           error: true,
+          message: "Error: couldn't open the barrier!",
           message: "timeOut",
         }
       );
@@ -80,7 +80,9 @@ const open_parking_barrier = async (req, res) => {
         parkingSpaceReservation.parkingSpaceId.toString(),
       (responseMessage) => {
         clearTimeout(checkTimeOut);
-        res.json({ responseMessage });
+        res.json({
+          responseMessage,
+        });
       }
     );
     // parkingSpaceReservation.isCarParked = true;
@@ -139,18 +141,19 @@ const parking_spaces_near_get = async (req, res) => {
     if (value) {
       value = JSON.parse(value);
       console.log(value); //!vacant = true
-      mergedData.push({
-        ...value,
-        coordinates: results[i].location.coordinates,
-        price: results[i]._doc.price,
-        // hi: "dsj",
-      });
+      if (value.vacant) {
+        mergedData.push({
+          ...value,
+          coordinates: results[i].location.coordinates,
+          price: results[i]._doc.price,
+        });
+      }
     }
   }
 
   mergedData.length > 0
     ? res.status(201).json({ data: mergedData })
-    : res.status(404).json({ errorMsg: "No parking spaces!" });
+    : res.status(404).json({ message: "No parking spaces!", error: true });
 };
 
 //!
@@ -160,7 +163,9 @@ const reserve_parking_space = async (req, res) => {
 
   //check inputs (date)
   if (!date || !moment(date).isAfter(moment(new Date()))) {
-    return res.status(400).json({ errorMsg: "error: date is incorrect!" });
+    return res
+      .status(400)
+      .json({ message: "error: date is incorrect!", error: true });
   }
   //check parking space
   const parkingSpaceReservationFound = await ReservationModel.find({
@@ -171,10 +176,14 @@ const reserve_parking_space = async (req, res) => {
   });
   const parkingSpaceFound = await ParkingSpaceModel.findById(parkingSpaceId);
   if (parkingSpaceReservationFound.length != 0) {
-    return res.status(400).json({ errorMsg: "error: parking space reserved!" });
+    return res
+      .status(400)
+      .json({ message: "error: parking space reserved!", error: true });
   }
   if (!parkingSpaceFound) {
-    return res.status(404).json({ errorMsg: "error: parking space not found" });
+    return res
+      .status(404)
+      .json({ message: "error: parking space not found", error: true });
   }
   //reserve
   const reservtion = new ReservationModel({
@@ -187,7 +196,9 @@ const reserve_parking_space = async (req, res) => {
 
   const results = await reservtion.save();
   if (!results) {
-    return res.status(400).json({ errorMsg: "error: reservation failed!" });
+    return res
+      .status(400)
+      .json({ message: "error: reservation failed!", error: true });
   }
 
   //send ack
@@ -195,8 +206,8 @@ const reserve_parking_space = async (req, res) => {
 };
 
 export {
-  all_parking_spaces_get,
-  parking_space_get_by_ID,
+  // all_parking_spaces_get,
+  // parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
   reserve_parking_space,

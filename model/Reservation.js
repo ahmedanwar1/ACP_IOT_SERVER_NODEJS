@@ -4,16 +4,13 @@ const reservationSchema = new mongoose.Schema(
   {
     userId: {
       required: true,
-      // type: mongoose.SchemaTypes.ObjectId,
       type: String,
       ref: "User",
-      // unique: true,
     },
     parkingSpaceId: {
       required: true,
       type: mongoose.SchemaTypes.ObjectId,
       ref: "ParkingSpace",
-      // unique: true,
     },
     reservationDate: {
       required: true,
