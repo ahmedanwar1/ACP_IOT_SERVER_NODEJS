@@ -1,5 +1,8 @@
 import express from "express";
 import {
+  all_booking_get,
+  cancel_booking,
+  current_booking_get,
   // all_parking_spaces_get,
   // parking_space_get_by_ID,
   open_parking_barrier,
@@ -25,6 +28,15 @@ router.post("/openBarrier", isAuth, open_parking_barrier);
 
 //reserve a parking space
 router.post("/reserveParkingSpace", isAuth, reserve_parking_space);
+
+//cancel booking
+router.post("/cancelBooking", isAuth, cancel_booking);
+
+//get current booking
+router.get("/getCurrentBooking", isAuth, current_booking_get);
+
+//get all bookings
+router.get("/allBooking", isAuth, all_booking_get);
 
 // app.get("/test", async (req, res) => {});
 

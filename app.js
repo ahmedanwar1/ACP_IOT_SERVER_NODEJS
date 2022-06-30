@@ -31,7 +31,7 @@ mqttClient.on("connect", () => {
 
   // mqttClient.publish(
   //   "parking/space/6230e4050551177b1192d7cd",
-  //   '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+  //   '{"_id": "6230e4050551177b1192d7cd", "vacant": true, "barrierIsOpened": false ,"time":' +
   //     new Date().getTime() +
   //     "}"
   // );
@@ -39,7 +39,7 @@ mqttClient.on("connect", () => {
   // setInterval(() => {
   //   mqttClient.publish(
   //     "parking/space/6230e4050551177b1192d7cd",
-  //     '{"_id": "6230e4050551177b1192d7cd", "vacant": false, "barrierIsOpened": true ,"time":' +
+  //     '{"_id": "6230e4050551177b1192d7cd", "vacant": true, "barrierIsOpened": false ,"time":' +
   //       new Date().getTime() +
   //       "}"
   //   );

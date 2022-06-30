@@ -26,6 +26,16 @@ const reservationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    origin: {
+      required: true,
+      type: String,
+      default: "Unknown",
+    },
+    destination: {
+      required: true,
+      type: String,
+      default: "Unknown",
+    },
   },
   { timestamps: true }
 );

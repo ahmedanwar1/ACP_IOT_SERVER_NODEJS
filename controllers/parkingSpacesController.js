@@ -1,5 +1,6 @@
 // import { redisClient } from "../config/connections.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
+import TransactionModel from "../model/Transaction.js";
 import { mqttClient, redisClient } from "../config/connections.js";
 import { eventEmitter } from "../app.js";
 import ReservationModel from "../model/Reservation.js";
@@ -53,13 +54,12 @@ import moment from "moment";
 //!
 const open_parking_barrier = async (req, res) => {
   const { registration_number: userId } = req.user;
-  const parkingSpaceReservation = await ReservationModel.findOneAndUpdate(
-    {
-      registration_number: userId,
-      completed: false,
-    },
-    { isCarParked: true }
-  );
+  const parkingSpaceReservation = await ReservationModel.findOne({
+    registration_number: userId,
+    completed: false,
+  });
+
+  // console.log(parkingSpaceReservation.parkingSpaceId);
 
   if (parkingSpaceReservation) {
     console.log(parkingSpaceReservation.parkingSpaceId.toString());
@@ -70,7 +70,7 @@ const open_parking_barrier = async (req, res) => {
         {
           error: true,
           message: "Error: couldn't open the barrier!",
-          message: "timeOut",
+          // message: "timeOut",
         }
       );
     }, 10000);
@@ -78,9 +78,16 @@ const open_parking_barrier = async (req, res) => {
     eventEmitter.once(
       "responseEvent/openbarrier/" +
         parkingSpaceReservation.parkingSpaceId.toString(),
-      (responseMessage) => {
+      async (responseMessage) => {
         clearTimeout(checkTimeOut);
-        res.json({
+        const updatedSpace = await ReservationModel.findOneAndUpdate(
+          {
+            registration_number: userId,
+            completed: false,
+          },
+          { isCarParked: true }
+        );
+        return res.json({
           responseMessage,
         });
       }
@@ -158,7 +165,7 @@ const parking_spaces_near_get = async (req, res) => {
 
 //!
 const reserve_parking_space = async (req, res) => {
-  const { date, parkingSpaceId } = req.body;
+  const { date, parkingSpaceId, origin, destination } = req.body;
   const { registration_number: userId } = req.user;
 
   //check inputs (date)
@@ -192,6 +199,8 @@ const reserve_parking_space = async (req, res) => {
     reservationDate: date,
     isCarParked: false,
     completed: false,
+    origin,
+    destination,
   });
 
   const results = await reservtion.save();
@@ -205,10 +214,103 @@ const reserve_parking_space = async (req, res) => {
   res.status(201).json({ data: results });
 };
 
+const cancel_booking = async (req, res) => {
+  const { registration_number: userId } = req.user;
+  //check parking space
+  const parkingSpaceReservation = await ReservationModel.find({
+    userId,
+    completed: false,
+    isCarParked: false,
+  });
+
+  if (!parkingSpaceReservation) {
+    return res.status(404).json({ error: true, message: "unexpected error!" });
+  }
+
+  if (parkingSpaceReservation.isCarParked) {
+    return res.status(404).json({ error: true, message: "car parked!" });
+  }
+  //check inputs (date)
+  if (
+    moment(new Date()).diff(
+      moment(parkingSpaceReservation.createdAt),
+      "minutes"
+    ) > 20
+  ) {
+    return res.status(201).json({
+      message: "error: cannot cancel booking after 20 mins!",
+      error: true,
+    });
+  }
+
+  const removedReservation = await ReservationModel.findOneAndRemove({
+    userId,
+    completed: false,
+    isCarParked: false,
+  });
+
+  if (!removedReservation) {
+    return res.status(400).json({ error: true, message: "unexpected error!" });
+  }
+  return res.status(201).json({ message: "booking removed successfully." });
+};
+
+const current_booking_get = async (req, res) => {
+  const { registration_number: userId } = req.user;
+  //check parking space
+  const parkingSpaceReservation = await ReservationModel.find({
+    userId,
+    completed: false,
+  }).populate("parkingSpaceId");
+
+  if (!parkingSpaceReservation) {
+    return res.status(404).json({ booking: null });
+  }
+
+  return res.status(201).json({ booking: parkingSpaceReservation });
+};
+
+const all_booking_get = async (req, res) => {
+  const { registration_number: userId } = req.user;
+  //check parking space
+  // const parkingSpaceReservations = await ReservationModel.find({
+  //   userId,
+  //   completed: true,
+  // });
+  const transaction = await TransactionModel.find({
+    userId,
+  }).populate("reservationId");
+
+  console.log(transaction);
+
+  // if (!parkingSpaceReservations) {
+  //   return res.status(404).json({ booking: [] });
+  // }
+
+  if (!transaction) {
+    return res.status(404).json({ booking: [] });
+  }
+
+  const generatedBookings = transaction.map((trans) => {
+    return {
+      booking: trans.reservationId,
+      totalPrice: trans.amount,
+      leavingTime: trans.createdAt,
+    };
+  });
+
+  return res.status(201).json({
+    booking: generatedBookings,
+  });
+};
+
 export {
   // all_parking_spaces_get,
   // parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
   reserve_parking_space,
+  cancel_booking,
+  current_booking_get,
+  all_booking_get,
 };
