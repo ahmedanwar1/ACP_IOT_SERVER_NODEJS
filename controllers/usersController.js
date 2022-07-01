@@ -204,11 +204,28 @@ const payment_confirmed = async (req, res) => {
 
     eventEmitter.once(
       "responseEvent/openbarrier/" + spaceId,
-      (responseMessage) => {
+      async (responseMessage) => {
         clearTimeout(checkTimeOut);
-        return res.json({
-          responseMessage,
-        });
+        // return res.json({
+        //   responseMessage,
+        // });
+        const updatedReservation = await ReservationModel.findOneAndUpdate(
+          {
+            userId: userId,
+            completed: false,
+          },
+          { completed: true }
+        );
+
+        if (!updatedReservation) {
+          return res
+            .status(400)
+            .json({ message: "updated reservation failed!", error: true });
+        }
+
+        res
+          .status(201)
+          .json({ message: "transaction completed!", confirmed: true });
       }
     );
 
@@ -219,21 +236,6 @@ const payment_confirmed = async (req, res) => {
       },
     });
   }
-  const updatedReservation = await ReservationModel.findOneAndUpdate(
-    {
-      userId: userId,
-      completed: false,
-    },
-    { completed: true }
-  );
-
-  if (!updatedReservation) {
-    return res
-      .status(400)
-      .json({ message: "updated reservation failed!", error: true });
-  }
-
-  res.status(201).json({ message: "transaction completed!", confirmed: true });
 };
 
 export {
