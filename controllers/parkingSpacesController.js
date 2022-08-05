@@ -1,4 +1,3 @@
-// import { redisClient } from "../config/connections.js";
 import ParkingSpaceModel from "../model/ParkingSpace.js";
 import TransactionModel from "../model/Transaction.js";
 import { mqttClient, redisClient } from "../config/connections.js";
@@ -6,60 +5,12 @@ import { eventEmitter } from "../app.js";
 import ReservationModel from "../model/Reservation.js";
 import moment from "moment";
 
-// //* test
-// const all_parking_spaces_get = async (req, res) => {
-//   try {
-//     const results = await ParkingSpaceModel.find();
-//     const mergedData = [];
-//     for (let i = 0; i < results.length; i++) {
-//       let value = await redisClient.get(results[i]._id);
-//       if (value) {
-//         value = JSON.parse(value);
-//         // console.log(value);
-//         mergedData.push({
-//           ...value,
-//           coordinates: results[i].location.coordinates,
-//         });
-//         // mergedData.push({ ...parkingSpaces[results[i]._id], ...results[i] });
-//       }
-//     }
-
-//     mergedData.length > 0
-//       ? res.status(201).json({ data: mergedData, success: true })
-//       : res
-//           .status(404)
-//           .json({ data: [], message: "No parking spaces!", success: false });
-//     // });
-//     // }
-//     // return res.json({ msg: "NOT AUTHORIZED!" });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: error });
-//   }
-// };
-
-// //* test
-// const parking_space_get_by_ID = async (req, res) => {
-//   const _id = req.params.id;
-//   const space = await ParkingSpaceModel.find({ _id: _id });
-//   console.log(...space);
-//   // return res.json(
-//   //   parkingSpaces[_id] ? { ...parkingSpaces[_id] } : { msg: "No such space!" }
-//   if (space) {
-//     return res.json(...space);
-//   }
-//   return res.status(404).json({ msg: "No such space!" });
-// };
-
-//!
 const open_parking_barrier = async (req, res) => {
   const { registration_number: userId } = req.user;
   const parkingSpaceReservation = await ReservationModel.findOne({
     registration_number: userId,
     completed: false,
   });
-
-  // console.log(parkingSpaceReservation.parkingSpaceId);
 
   if (parkingSpaceReservation) {
     console.log(parkingSpaceReservation.parkingSpaceId.toString());
@@ -92,25 +43,21 @@ const open_parking_barrier = async (req, res) => {
         });
       }
     );
-    // parkingSpaceReservation.isCarParked = true;
-    // const result = await parkingSpaceReservation.save();
-    // if (result) {
+
     mqttClient.publish(
       "request/openbarrier/" +
         parkingSpaceReservation.parkingSpaceId.toString(),
-      // JSON.stringify({ action: "open" }),
-      "open",
+
+      "openForParking",
       {
         qos: 1,
         properties: {
           responseTopic:
             "response/openbarrier/" +
             parkingSpaceReservation.parkingSpaceId.toString(),
-          // correlationData: Buffer.from("secret_" + id, "utf-8"),
         },
       }
     );
-    // }
   }
 };
 
@@ -272,20 +219,12 @@ const current_booking_get = async (req, res) => {
 
 const all_booking_get = async (req, res) => {
   const { registration_number: userId } = req.user;
-  //check parking space
-  // const parkingSpaceReservations = await ReservationModel.find({
-  //   userId,
-  //   completed: true,
-  // });
+
   const transaction = await TransactionModel.find({
     userId,
   }).populate("reservationId");
 
   console.log(transaction);
-
-  // if (!parkingSpaceReservations) {
-  //   return res.status(404).json({ booking: [] });
-  // }
 
   if (!transaction) {
     return res.status(404).json({ booking: [] });
@@ -305,8 +244,6 @@ const all_booking_get = async (req, res) => {
 };
 
 export {
-  // all_parking_spaces_get,
-  // parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
   reserve_parking_space,

@@ -3,8 +3,6 @@ import {
   all_booking_get,
   cancel_booking,
   current_booking_get,
-  // all_parking_spaces_get,
-  // parking_space_get_by_ID,
   open_parking_barrier,
   parking_spaces_near_get,
   reserve_parking_space,
@@ -13,11 +11,6 @@ import {
 import isAuth from "../middleware/auth.js";
 
 const router = express.Router();
-//get all parking spaces
-// router.get("/getAllParkingSpaces", all_parking_spaces_get);
-
-//get a specific parking space by id
-// router.get("/getParkingSpace/:id", parking_space_get_by_ID);
 
 //get the nearest parking spaces
 router.get("/getNearParkingSpaces", isAuth, parking_spaces_near_get);

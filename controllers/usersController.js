@@ -187,11 +187,8 @@ const payment_confirmed = async (req, res) => {
       .json({ message: "error: storing transaction failed!", error: true });
   }
 
-  //! open barrier .....
-  //!
-  //!
+  //open barrier
   if (parkingSpaceReservation) {
-    // openBarrier(parkingSpaceReservation.parkingSpaceId.toString(), res);
     const spaceId = parkingSpaceReservation.parkingSpaceId.toString();
     // console.log(parkingSpaceReservation.parkingSpaceId.toString());
     const checkTimeOut = setTimeout(() => {
@@ -206,9 +203,7 @@ const payment_confirmed = async (req, res) => {
       "responseEvent/openbarrier/" + spaceId,
       async (responseMessage) => {
         clearTimeout(checkTimeOut);
-        // return res.json({
-        //   responseMessage,
-        // });
+
         const updatedReservation = await ReservationModel.findOneAndUpdate(
           {
             userId: userId,
@@ -229,7 +224,7 @@ const payment_confirmed = async (req, res) => {
       }
     );
 
-    mqttClient.publish("request/openbarrier/" + spaceId, "open", {
+    mqttClient.publish("request/openbarrier/" + spaceId, "openForLeaving", {
       qos: 1,
       properties: {
         responseTopic: "response/openbarrier/" + spaceId,
